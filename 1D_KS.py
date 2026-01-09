@@ -3,12 +3,25 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
+def dealiase(f):
+    pass
+
+
 def get_R(u, f, kx):
+
+    # non-linear term u∂ₓu in fourier space
     u_sq = u**2
     u_sqf = np.fft.fft(u_sq**2)
-    u_sqf_x = np.complex128(kx) * u_sqf
+    u_sqf_x = np.complex128(0, kx) * u_sqf
     u_sq_x = np.fft.irfft(u_sqf_x)
-    R = 0.5 * u_sq_x
+    udu = -0.5 * u_sq_x
+
+    # add linear terms in fourier space
+    udu_f = np.fft.fft(udu)
+    u_f = np.fft.fft(u)
+    u_f = dealiase(u_f)
+    R = udu_f - (-kx**2 + kx**4)*u_f
+    
     return R
 
 
