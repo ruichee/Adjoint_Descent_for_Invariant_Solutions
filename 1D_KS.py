@@ -40,7 +40,7 @@ def get_R(u, f, kx): # TRY IMPLEMENTING VIA FINITE DIFFERENCE, VALIDATE IF FEASI
     R_f = np.where(kx == 0, 0, R_f)             # ensures the sine wave has no constant component (k=0)
 
     # convert back to physical space
-    R = np.real(np.fft.ifft(R_f))               # obtain R(u) = -u∂ₓu - ∂ₓₓu - ∂ₓₓₓₓu
+    R = np.real(np.fft.ifft(R_f)) + f           # obtain R(u) = -u∂ₓu - ∂ₓₓu - ∂ₓₓₓₓu + f
     return R
 
 
