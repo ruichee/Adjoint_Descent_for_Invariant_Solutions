@@ -5,6 +5,8 @@ from matplotlib.animation import FuncAnimation
 from tqdm import tqdm
 
 
+###############################################################################################
+
 def get_vars(domain_size, num_colloc_pts):
 
     L, n = domain_size, num_colloc_pts
@@ -13,6 +15,7 @@ def get_vars(domain_size, num_colloc_pts):
     kx = 2*np.pi * np.fft.fftfreq(n, d=L/n)     # fourier wave numbers (k) for DFT
     return (x, kx)                              # NOTE: L-dx ensure no cutting into next period
 
+###############################################################################################
 
 def dealiase(ff, kx):
 
@@ -21,6 +24,7 @@ def dealiase(ff, kx):
     ff_filtered = np.where(k < k_max, ff, 0)    # all higher frequencies are set to 0
     return ff_filtered
 
+###############################################################################################
 
 def get_R(u, f, kx): # TRY IMPLEMENTING VIA FINITE DIFFERENCE, VALIDATE IF FEASIBLE
 
@@ -58,6 +62,7 @@ def get_R(u, f, kx): # TRY IMPLEMENTING VIA FINITE DIFFERENCE, VALIDATE IF FEASI
     
     return R
 
+###############################################################################################
 
 def get_G(u, f, kx):
 
@@ -86,28 +91,31 @@ def get_G(u, f, kx):
 
     return G
 
+###############################################################################################
 
-def adj_descent(u0, f, T, dt, n_iter, tol):
+def adj_descent(u0, f, T, dt, rtol, atol):
 
-    u_lst = [u0]
-    G_lst = []
-    u = u0
-    
-    for _ in range(n_iter):
-        un = u.copy()
-        G = get_G(u, f, kx)
+    # Set up the time interval
+    nt = int(T / dt) + 1  
+    tspan = np.linspace(0, T, nt)
 
-        #u = solve_ivp(lambda t, u: get_G(u, f, kx), (0,T), un, method='RK45')
+    # Integration: use solve_ivp with method='BDF' to mimic ode15s (stiff solver)
+    solution = solve_ivp(
+        fun=lambda t,u: get_G(u, f, kx),        # function that returns du/dt
+        t_span=(0, T),                          # (start_time, end_time)
+        y0=u0,                                   # Initial condition
+        method='BDF',                           # 'BDF' or 'Radau' replaces ode15s
+        t_eval=tspan,                           # The specific time points returned
+        rtol=rtol,                              # Relative tolerance
+        atol=atol                               # Absolute tolerance
+    )
 
-        u = un + dt*G # can implement rk45 later on
-        u_lst.append(u)
-        G_lst.append(sum(G))
+    # Update the variable
+    u_lst = solution.y.T 
 
-        '''if G < tol: 
-            break'''
+    return u_lst
 
-    return u, u_lst, G_lst
-        
+###############################################################################################
 
 def ngh_descent(u0, f, T, dt, n_iter, tol):
 
@@ -127,6 +135,7 @@ def ngh_descent(u0, f, T, dt, n_iter, tol):
 
     return u, u_lst
 
+###############################################################################################
 
 def plot_data(u_lst):
     
@@ -137,21 +146,17 @@ def plot_data(u_lst):
     # animate convergence
     #ani = FuncAnimation(fig=fig, frames=update)
 
-    plt.plot(u_lst[10])
+    [plt.plot(u_lst[i]) for i in range(1, len(u_lst))]
+    plt.plot(u_lst[0], linestyle='--', color='red')
+
     plt.show()
 
+###############################################################################################
 
+def main(u0, L, n, f, T, dt, adj_rtol, adj_atol):
 
-def main(u0, L, n, f, T, dt, n_iter_adj, n_iter_ngh, tol_adj, tol_ngh):
+    u_lst = adj_descent(u0, f, T, dt, adj_rtol, adj_atol)
 
-    u_lst = [u0]
-
-    u, u_lst1, G_lst1 = adj_descent(u0, f, T, dt, n_iter_adj, tol_adj)
-    u_lst += u_lst1
-
-    plt.plot(G_lst1)
-    plt.show()
-    print(u_lst1)
     
     # check if ngh descent is required here
 
@@ -161,6 +166,7 @@ def main(u0, L, n, f, T, dt, n_iter_adj, n_iter_ngh, tol_adj, tol_ngh):
 
     plot_data(u_lst)
 
+###############################################################################################
 
 # define variables 
 L = 22      # domain size
@@ -170,16 +176,12 @@ n = 128     # number of collocation points
 x, kx = get_vars(domain_size=L, num_colloc_pts=n)
 
 # define initial conditions of field variable u
-m = 2
+m = 1
 u0 = 2*np.sin(m*2*np.pi*x/L)
 
 
 #U = -(np.fft.ifft(np.fft.fft(u) * 1j * kx))
 
-#main(u0, L, n, 0, T=200, dt=1, n_iter_adj=100, n_iter_ngh=0, tol_adj=1e-12, tol_ngh=1e-12)
-
-#G = get_G(u0, 0, kx)
+main(u0, L, n, 0, T=200, dt=1, adj_rtol=1e-10, adj_atol=1e-10)
 
 
-plt.plot(G)
-plt.show()
