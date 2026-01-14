@@ -130,14 +130,14 @@ def adj_descent(u0, rtol, atol):
 
     # Integration: use solve_ivp with method='BDF' to mimic ode15s (stiff solver)
     solution = solve_ivp(
-        fun=lambda t,u: get_G(u),               # function that returns du/dt
-        t_span=(0, T),                          # (start_time, end_time)
-        y0=u0,                                  # Initial condition
-        method='BDF',                           # 'BDF' or 'Radau' replaces ode15s
-        events=steady_state_event,              # determine when to end iteration early
-        t_eval=tspan,                           # The specific time points returned
-        rtol=rtol,                              # Relative tolerance
-        atol=atol                               # Absolute tolerance
+        fun=lambda t,u: get_G(u),           # function that returns du/dt
+        t_span=(0, T),                      # (start_time, end_time)
+        y0=u0,                              # Initial condition
+        method='BDF',                       # 'BDF' or 'Radau' - implicit adaptive time stepping
+        events=steady_state_event,          # check if ||G(u)|| < tol, can end iteration early
+        t_eval=tspan,                       # The specific time points returned
+        rtol=rtol,                          # Relative tolerance
+        atol=atol                           # Absolute tolerance
     )
 
     # Extract the output list of iteration values
@@ -160,7 +160,7 @@ def compute_residuals(u_lst):
 
 ###############################################################################################
 
-def plot_data(u_lst) -> None:
+def plot_data(u_lst, t_lst) -> None:
     
     def update():
         pass
@@ -175,12 +175,14 @@ def plot_data(u_lst) -> None:
     u_val.set_xlabel('x')
     u_val.set_ylabel('u')
     u_val.set_title('Steady Solution of 1D KS Equation')
+    u_val.grid()
     
     G_lst = compute_residuals(u_lst)
-    res.plot(G_lst)
+    res.plot(t_lst, G_lst)
     res.semilogy()
     res.set_xlabel('τ')
     res.set_title('Residual of Adjoint Norm ||G(u)||')
+    res.grid()
 
     fig.tight_layout()
     plt.show()
@@ -191,25 +193,16 @@ def main(u0, adj_rtol, adj_atol) -> None:
 
     u_lst, t_lst = adj_descent(u0, adj_rtol, adj_atol)
 
-    print(t_lst[-1])
-
-    
-    # check if ngh descent is required here
-
-    '''u, u_lst2 = ngh_descent(u, f, T, dt, n_iter_ngh, tol_ngh)
-    u_lst += u_lst2
-    print(len(u_lst))'''
-
-    plot_data(u_lst)
+    plot_data(u_lst, t_lst)
 
 ###############################################################################################
 
 # define variables 
-L = 22          # domain size
-n = 128         # number of collocation points
-T = 1000        # max iteration time
-dt = 1          # iteration step 
-u_tol = 1e-6    # tolerance for converged u
+L = 22                          # domain size
+n = 128                         # number of collocation points
+T = 1000                        # max iteration time
+dt = 1                          # iteration step 
+u_tol = 1e-6                    # tolerance for converged u
 
 # obtain domain field (x), and fourier wave numbers kx
 x, kx = get_vars(domain_size=L, num_colloc_pts=n)
