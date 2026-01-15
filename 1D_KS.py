@@ -32,8 +32,8 @@ def get_R(u): # TRY IMPLEMENTING VIA FINITE DIFFERENCE, VALIDATE IF FEASIBLE
 
     global kx, f
 
-    '''# non-linear term -u∂ₓu in fourier space
-    u_sq = u**2                                 # obtain u^2, since -u∂ₓu = -0.5*∂ₓ(u^2)
+    # non-linear term -u∂ₓu in fourier space (for conservative form)
+    '''u_sq = u**2                                 # obtain u^2, since -u∂ₓu = -0.5*∂ₓ(u^2)
     u_sqf = np.fft.fft(u_sq)                    # bring u^2 into fourier space
     u_sqf_x = 1j * kx * u_sqf                   # multiply by ik to each u_k (differentiate in fourier)
     u_sq_x = np.fft.ifft(u_sqf_x)               # convert back to physical space, we get ∂ₓ(u^2)
@@ -87,6 +87,7 @@ def get_G(u):
     inner_x_f = 1j * kx * inner_f
     non_lin_term = -np.fft.ifft(inner_x_f)
 
+    # non-linear term (for conservative form)
     '''non_lin_term = -u*np.fft.ifft(1j * kx * R_f)
     nlt_f = np.fft.fft(non_lin_term)'''
 
@@ -171,11 +172,13 @@ def plot_data(u_lst, t_lst) -> None:
     fig, (u_val, res) = plt.subplots(1, 2, figsize=(10, 5))
 
     #[u_val.plot(u_lst[i]) for i in range(1, len(u_lst))]
-    u_val.plot(u_lst[-1])
-    u_val.plot(u_lst[0], linestyle='--', color='red')
+    global x
+    u_val.plot(x, u_lst[-1])
+    u_val.plot(x, u_lst[0], linestyle='--', color='red')
     u_val.set_xlabel('x')
     u_val.set_ylabel('u')
     u_val.set_title('Steady Solution of 1D KS Equation')
+    u_val.set_xlim(0, L)
     u_val.grid()
     
     G_lst = compute_residuals(u_lst)
@@ -183,6 +186,7 @@ def plot_data(u_lst, t_lst) -> None:
     res.semilogy()
     res.set_xlabel('τ')
     res.set_title('Residual of Adjoint Norm ||G(u)||')
+    res.set_xlim(0, t_lst[-1])
     res.grid()
 
     fig.tight_layout()
@@ -214,7 +218,7 @@ L = 22                          # domain size
 n = 128                         # number of collocation points
 T = 5000                        # max iteration time
 dt = 1                          # iteration step 
-u_tol = 1e-6                    # tolerance for converged u
+u_tol = 1e-8                    # tolerance for converged u
 
 # obtain domain field (x), and fourier wave numbers kx
 x, kx = get_vars(domain_size=L, num_colloc_pts=n)
