@@ -31,8 +31,10 @@ def dealiase(ff):
 
     kx_abs = np.absolute(KX)
     ky_abs = np.absolute(KY)
+
     kx_max = 1/3 * np.max(kx_abs)                       # maximum frequency that we will keep
     ky_max = 1/3 * np.max(ky_abs)                       # maximum frequency that we will keep
+
     ff_filterx = np.where(KX < kx_max, ff, 0)           # all higher frequencies in x are set to 0
     ff_filterxy = np.where(KY < ky_max, ff_filterx, 0)  # all higher frequencies in y are set to 0
     
@@ -40,41 +42,36 @@ def dealiase(ff):
 
 ###############################################################################################
 
-def get_R(u): # TRY IMPLEMENTING VIA FINITE DIFFERENCE, VALIDATE IF FEASIBLE
+def get_R(u): 
 
-    global KX, f
-
-    # non-linear term -u∂ₓu in fourier space (for conservative form)
-    '''u_sq = u**2                                 # obtain u^2, since -u∂ₓu = -0.5*∂ₓ(u^2)
-    u_sqf = np.fft.fft(u_sq)                    # bring u^2 into fourier space
-    u_sqf_x = 1j * kx * u_sqf                   # multiply by ik to each u_k (differentiate in fourier)
-    u_sq_x = np.fft.ifft(u_sqf_x)               # convert back to physical space, we get ∂ₓ(u^2)
-    udu = -0.5 * u_sq_x                         # multiply by minus half to obtain -u∂ₓu'''
-
-    # alternatively, find -u∂ₓu more directly
-    '''u_f = dealiase(np.fft.fft(u), kx)
-    du = np.fft.ifft(1j * kx * u_f)
-    udu = -u * du'''
+    global KX, KY, f
 
     # obtain u in fourier space
     u_f = np.fft.fft(u)                         # bring u into fourier
     u_f = dealiase(u_f)                         # dealise u
 
     # non-linear term -1/2(∂ₓu)^2 in fourier space 
-    u_x_f = 1j * kx * u_f                       # ∂ₓu in fourier, differentiate via multiply ik
+    u_x_f = 1j * KX * u_f                       # ∂ₓu in fourier, differentiate via multiply ik_x
+    u_y_f = 1j * KY * u_f                       # ∂ᵧu in fourier, differentiate via multiply ik_y
     u_x = np.fft.ifft(u_x_f)                    # bring back to physical space
-    u_x_sq = -0.5 * u_x * u_x                   # get -1/2(∂ₓu)^2
+    u_y = np.fft.ifft(u_y_f)                    # bring back to physical space
+    u_sq_terms = -0.5 * (u_x*u_x + u_y*u_y)     # get -1/2(∂ₓu)^2
 
-    # add linear terms -∂ₓₓu-∂ₓₓₓₓu in fourier space 
-    u_x_sq_f = np.fft.fft(u_x_sq)               # bring u∂ₓu back to fourier
-    R_f = u_x_sq_f + (kx**2 - kx**4)*u_f        # add linear terms, n-derivative = multiply u by (ik)^n
+    # linear terms -∂ₓₓu-∂ᵧᵧu-∂ₓₓₓₓu-∂ᵧᵧᵧᵧu-2∂ₓₓ∂ᵧᵧu in fourier space 
+    lin_terms_f =  (KX**2 + KY**2 
+                    - KX**4 - KY**4 
+                    - 2*KX**2*KY**2)*u_f        # n-derivative = multiply u by (ik)^n
+    
+    # add terms together 
+    R_f = np.fft.fft(u_sq_terms) + lin_terms_f
     R_f = dealiase(R_f)                         # dealise R
 
     # set mean flow = 0, no DC component/offset
-    R_f = np.where(kx == 0, 0, R_f)             # ensures the sine wave has no constant component (k=0)
+    R_f = np.where(KX == 0, 0, R_f)             # ensures the sine wave has no constant x component (kx=0)
+    R_f = np.where(KY == 0, 0, R_f)             # ensures the sine wave has no constant y component (ky=0)
 
     # convert back to physical space
-    R = np.real(np.fft.ifft(R_f)) + f           # obtain R(u) = -u∂ₓu - ∂ₓₓu - ∂ₓₓₓₓu + f
+    R = np.real(np.fft.ifft(R_f)) + f           # obtain R(u)
     
     return R
 
@@ -82,7 +79,7 @@ def get_R(u): # TRY IMPLEMENTING VIA FINITE DIFFERENCE, VALIDATE IF FEASIBLE
 
 def get_G(u):
 
-    global KX, f
+    global KX, KY, f
 
     # first obtain R and its fourier transform
     R = get_R(u)
@@ -226,7 +223,7 @@ def main(u0, adj_rtol, adj_atol) -> None:
 ###############################################################################################
 
 # define variables 
-Lx, Ly = 22, 22                 # domain size
+Lx, Ly = 20, 20                 # domain size
 nx, ny = 128, 128               # number of collocation points
 T = 5000                        # max iteration time
 dt = 1                          # iteration step 
@@ -237,12 +234,14 @@ X, KX, Y, KY = get_vars(Lx, Ly, nx, ny)
 
 # define initial conditions of field variable u
 m = 1 
-n = 4
+n = 1
 u0 = 2*-np.cos(2*np.pi*(m*X/Lx + n*Y/Ly))   # initial wave
 f = 0                                       # forcing term
 
-
+R = get_R(u0)
 plt.contourf(X, Y, u0)
+plt.show()
+plt.contourf(X, Y, R)
 plt.show()
 
 # call to main function to execute descent
