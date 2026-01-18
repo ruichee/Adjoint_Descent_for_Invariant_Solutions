@@ -77,7 +77,7 @@ def get_R(u):
 
 ###############################################################################################
 
-def get_G(u):
+def get_G(t, u):
 
     global KX, KY, f
 
@@ -119,9 +119,11 @@ def get_G(u):
 
     # set mean flow = 0, no DC component/offset
     mask = (KX==0) * (KY==0)
-    G_f = np.where(mask, 0, R_f)
+    G_f = np.where(mask, 0, G_f)
 
     G = np.real(np.fft.ifft2(G_f))
+
+    print(t)
 
     return G
 
@@ -150,7 +152,7 @@ steady_state_event.direction = -1   # Only trigger when going from positive -> n
 
 def adj_descent(u0, rtol, atol):
 
-    global f, T, dt
+    global f, T, dt, nx, ny
 
     # Set up the time interval
     nt = int(T / dt) + 1  
@@ -158,18 +160,18 @@ def adj_descent(u0, rtol, atol):
 
     # Integration: use solve_ivp with method='BDF' to mimic ode15s (stiff solver)
     solution = solve_ivp(
-        fun=lambda t,u: get_G(u).flatten(),           # function that returns du/dt
+        fun=lambda t,u: get_G(t, u.reshape(nx, ny)).flatten(),           # function that returns du/dt
         t_span=(0, T),                      # (start_time, end_time)
-        y0=u0,                              # Initial condition
+        y0=u0.flatten(),                              # Initial condition
         method='BDF',                       # 'BDF' or 'Radau' - implicit adaptive time stepping
-        events=steady_state_event,          # check if ||G(u)|| < tol, can end iteration early
+        #events=steady_state_event,          # check if ||G(u)|| < tol, can end iteration early
         t_eval=tspan,                       # The specific time points returned
         rtol=rtol,                          # Relative tolerance
         atol=atol                           # Absolute tolerance
     )
 
     # Extract the output list of iteration values
-    u_lst = solution.y.T 
+    u_lst = np.array([u.reshape(nx, ny) for u in solution.y.T])
     t_lst = solution.t.T
 
     # check for convergence
@@ -177,12 +179,12 @@ def adj_descent(u0, rtol, atol):
 
 ###############################################################################################
 
-def compute_residuals(u_lst):
+def compute_residuals(t_lst, u_lst):
 
     G_lst = np.zeros(len(u_lst))
 
     for i in range(len(u_lst)):
-        G_lst[i] = np.linalg.norm(get_G(u_lst[i]))
+        G_lst[i] = np.linalg.norm(get_G(t_lst[i], u_lst[i]))
 
     return G_lst
 
@@ -225,9 +227,27 @@ def main(u0, adj_rtol, adj_atol) -> None:
 
     u_lst, t_lst = adj_descent(u0, adj_rtol, adj_atol)
 
-    plt.contourf(X, Y, u_lst[-1])
-    plt.colorbar()
+    fig, (u_val, res) = plt.subplots(1, 2, figsize=(10, 5))
+
+    u_val.contourf(X, Y, u_lst[-1])
+
+    G_lst = compute_residuals(t_lst, u_lst)
+    res.plot(t_lst, G_lst)
+    res.semilogy()
+    res.set_xlabel('τ')
+    res.set_title('Residual of Adjoint Norm ||G(u)||')
+    res.set_xlim(0, t_lst[-1])
+    res.grid()
+
+
     plt.show()
+
+
+    # check fourier values
+    u_k = np.fft.fft2(u_lst[-1])
+    print(np.abs(u_k[0, 1]), np.abs(u_k[1, 1]), np.abs(u_k[1, 0]))
+    print(np.abs(u_k[2, 0]), np.abs(u_k[2, 1]), np.abs(u_k[3, 0]), 
+          np.abs(u_k[3, 1]), np.abs(u_k[0, 2]), np.abs(u_k[1, 2]), np.abs(u_k[2, 2]))
 
     # plot own results (integrated non-conservative form)
     #plot_data(u_lst, t_lst)
@@ -235,20 +255,20 @@ def main(u0, adj_rtol, adj_atol) -> None:
 ###############################################################################################
 
 # define variables 
-Lx, Ly = 22, 22                 # domain size
-nx, ny = 128, 128               # number of collocation points
-T = 5000                        # max iteration time
+Lx, Ly = 10, 10                 # domain size
+nx, ny = 64, 64                 # number of collocation points
+T = 200                         # max iteration time
 dt = 1                          # iteration step 
-u_tol = 1e-8                    # tolerance for converged u
+u_tol = 1e-6                    # tolerance for converged u
 
 # obtain domain field (x), and fourier wave numbers kx
-X, KX, Y, KY = get_vars(Lx, Ly, nx, ny)
+X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 
 # define initial conditions of field variable u
-m = 1 
-n = 0
-u0 = 2*-np.cos(2*np.pi*(m*X/Lx + n*Y/Ly))   # initial wave
-f = 0                                       # forcing term
+m = 1
+n = 1
+u0 = np.cos(2*np.pi*(m*X/Lx + n*Y/Ly)) + np.sin(2*np.pi*m*X/Lx)
+f = 0 
 
 R = get_R(u0)
 plt.contourf(X, Y, u0)
@@ -259,6 +279,6 @@ plt.colorbar()
 plt.show()
 
 # call to main function to execute descent
-#main(u0, adj_rtol=1e-10, adj_atol=1e-10)
+main(u0, adj_rtol=1e-8, adj_atol=1e-8)
 
 
