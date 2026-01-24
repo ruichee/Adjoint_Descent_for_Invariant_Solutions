@@ -134,7 +134,7 @@ def adj_descent(u0, rtol, atol):
         fun=lambda t,u: get_G(u),           # function that returns du/dt
         t_span=(0, T),                      # (start_time, end_time)
         y0=u0,                              # Initial condition
-        method='BDF',                       # 'BDF' or 'Radau' - implicit adaptive time stepping
+        method='Radau',                       # 'BDF' or 'Radau' - implicit adaptive time stepping
         events=steady_state_event,          # check if ||G(u)|| < tol, can end iteration early
         t_eval=tspan,                       # The specific time points returned
         rtol=rtol,                          # Relative tolerance
@@ -216,9 +216,9 @@ def main(u0, adj_rtol, adj_atol) -> None:
 # define variables 
 L = 22                          # domain size
 n = 128                         # number of collocation points
-T = 5000                        # max iteration time
+T = 10000                        # max iteration time
 dt = 1                          # iteration step 
-u_tol = 1e-8                    # tolerance for converged u
+u_tol = 1e-10                    # tolerance for converged u
 
 # obtain domain field (x), and fourier wave numbers kx
 x, kx = get_vars(domain_size=L, num_colloc_pts=n)
@@ -229,6 +229,6 @@ u0 = 2*-np.cos(m*2*np.pi*x/L)   # initial wave
 f = 0                           # forcing term
 
 # call to main function to execute descent
-main(u0, adj_rtol=1e-10, adj_atol=1e-10)
+main(u0, adj_rtol=1e-15, adj_atol=1e-15)
 
 

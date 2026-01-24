@@ -123,7 +123,7 @@ def get_G(t, u):
 
     G = np.real(np.fft.ifft2(G_f))
 
-    print(t)
+    print(f"time: {t}, norm: {np.linalg.norm(G)}")
 
     return G
 
@@ -160,11 +160,13 @@ def adj_descent(u0, rtol, atol):
 
     # Integration: use solve_ivp with method='BDF' to mimic ode15s (stiff solver)
     solution = solve_ivp(
-        fun=lambda t,u: get_G(t, u.reshape(nx, ny)).flatten(),           # function that returns du/dt
+        fun=lambda t,u: \
+            get_G(t, u.reshape(nx, ny))
+            .flatten(),                     # function that returns du/dt
         t_span=(0, T),                      # (start_time, end_time)
-        y0=u0.flatten(),                              # Initial condition
+        y0=u0.flatten(),                    # Initial condition
         method='BDF',                       # 'BDF' or 'Radau' - implicit adaptive time stepping
-        #events=steady_state_event,          # check if ||G(u)|| < tol, can end iteration early
+        #events=steady_state_event,         # check if ||G(u)|| < tol, can end iteration early
         t_eval=tspan,                       # The specific time points returned
         rtol=rtol,                          # Relative tolerance
         atol=atol                           # Absolute tolerance
@@ -245,9 +247,10 @@ def main(u0, adj_rtol, adj_atol):
 
     # check fourier values
     u_k = np.fft.fft2(u_lst[-1])
-    print(np.abs(u_k[0, 1]), np.abs(u_k[1, 1]), np.abs(u_k[1, 0]))
-    print(np.abs(u_k[2, 0]), np.abs(u_k[2, 1]), np.abs(u_k[3, 0]), 
-          np.abs(u_k[3, 1]), np.abs(u_k[0, 2]), np.abs(u_k[1, 2]), np.abs(u_k[2, 2]))
+    func = lambda x,y: np.round(np.abs(u_k[x,y]), 2)
+    print(func(0, 1), func(1, 1), func(1, 0))
+    print(func(2, 0), func(2, 1), func(3, 0), 
+          func(3, 1), func(0, 2), func(1, 2), func(2, 2))
 
     # plot own results (integrated non-conservative form)
     #plot_data(u_lst, t_lst)
@@ -257,25 +260,41 @@ def main(u0, adj_rtol, adj_atol):
 ###############################################################################################
 
 # define variables 
-Lx, Ly = 10, 10                 # domain size
+Lx, Ly = 20, 20                 # domain size
 nx, ny = 64, 64                 # number of collocation points
-T = 200                         # max iteration time
+T = 100                         # max iteration time
 dt = 1                          # iteration step 
 u_tol = 1e-6                    # tolerance for converged u
 
 # obtain domain field (x), and fourier wave numbers kx
-X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
+X, KX, Y, KY = get_vars(Lx, Ly, nx, ny)
 
 # define initial conditions of field variable u
 m = 1
 n = 1
-u0 = np.cos(2*np.pi*(m*X/Lx + n*Y/Ly)) + np.sin(2*np.pi*m*X/Lx)
+u0 = np.cos(2*np.pi*(n*Y/Ly)) + np.sin(2*np.pi*(m*X/Lx))
+#u0 = np.sin(np.cos(2*np.pi*(m*X/Lx)) + np.cos(2*np.pi*(n*Y/Ly)))
+
+#u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
 f = 0 
 
 # E13 found
 '''m = 1
 n = 1
-u0 = np.cos(2*np.pi*(m*X/Lx + n*Y/Ly)) + np.sin(2*np.pi*m*X/Lx)'''
+u0 = np.cos(2*np.pi*(m*X/Lx + n*Y/Ly)) + np.sin(2*np.pi*m*X/Lx)
+f = 0'''
+
+# E13 found 
+'''m = 1
+n = 1
+u0 = np.cos(2*np.pi*(n*Y/Ly)) + np.sin(2*np.pi*(m*X/Lx))
+f = 0 '''
+
+# potentially E223
+'''m = 1
+n = 1
+u0 = np.sin(np.sin(2*np.pi*(m*X/Lx)) + np.cos(2*np.pi*(n*Y/Ly)))
+f = 0'''
 
 # display initial conditions
 fig, (u0_ax, R0_ax, G0_ax) = plt.subplots(1, 3, figsize=(15, 5))
@@ -291,8 +310,3 @@ plt.show()
 
 # call to main function to execute descent
 u_lst, t_lst = main(u0, adj_rtol=1e-8, adj_atol=1e-8)
-
-
-
-
-
