@@ -76,6 +76,27 @@ def get_R(t, u):
 
 ###############################################################################################
 
+def steady_state_event(t, u):
+
+    # rhs can either be get_R() or get_G()
+    dudt = get_R(t, u)
+
+    # compute R or G as a magnitude 
+    change_in_u = np.linalg.norm(dudt)
+
+    # set tolerance for ending iteration
+    global u_tol
+    tolerance = u_tol
+
+    # compare, if G or R < tol, end iteration
+    return change_in_u - tolerance
+
+# Configure the Event
+steady_state_event.terminal = True  # Stop the simulation when this event occurs
+steady_state_event.direction = -1   # Only trigger when going from positive -> negative
+
+###############################################################################################
+
 def time_marching(u0, rtol, atol):
 
     global f, T, dt, nx, ny
@@ -92,7 +113,7 @@ def time_marching(u0, rtol, atol):
         t_span=(0, T),                      # (start_time, end_time)
         y0=u0.flatten(),                    # Initial condition
         method='Radau',                       # 'BDF' or 'Radau' - implicit adaptive time stepping
-        #events=steady_state_event,         # check if ||G(u)|| < tol, can end iteration early
+        #events=steady_state_event,          # check if ||R(u)|| < tol, can end iteration early
         t_eval=tspan,                       # The specific time points returned
         rtol=rtol,                          # Relative tolerance
         atol=atol                           # Absolute tolerance
@@ -155,24 +176,27 @@ def main(u0, adj_rtol, adj_atol):
 
     u_lst, t_lst = time_marching(u0, adj_rtol, adj_atol)
 
+    # plot final contour and residual convergence
     fig, (u_val, res) = plt.subplots(1, 2, figsize=(10, 5))
-
     u_val.contourf(X, Y, u_lst[-1])
-
     G_lst = compute_residuals(t_lst, u_lst)
     res.plot(t_lst, G_lst)
     res.semilogy()
     res.set_xlabel('τ')
     res.set_title('Residual of Adjoint Norm ||G(u)||')
     res.set_xlim(0, t_lst[-1])
+    res.set_ylim(1e-15, 1e3)
     res.grid()
     plt.show()
 
+    # plot 3D surface and contour
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
     Z = u_lst[-1]
     ax.plot_surface(X, Y, Z, cmap="viridis")
-    ax.contour(X, Y, Z, lw=3, linestyles="solid", offset=-4)
+    ax.contour(X, Y, Z, levels=8, lw=3, linestyles="solid", offset=-4)
+    ax.set_xlim(0, 2*Lx)
+    ax.set_ylim(0, 2*Ly)
     ax.set_zlim(-6, 6)
     ax.set_xlabel("x")
     ax.set_ylabel("y")
@@ -199,7 +223,7 @@ Lx, Ly = np.pi / np.sqrt(v1), np.pi / np.sqrt(v2)
 nx, ny = 64, 64                 # number of collocation points
 T = 25                         # max iteration time
 dt = 0.05                         # iteration step 
-u_tol = 1e-6                    # tolerance for converged u
+u_tol = 1e-10                    # tolerance for converged u
 
 # obtain domain field (x), and fourier wave numbers kx
 X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
@@ -236,7 +260,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection="3d")
 Z = u0
 ax.plot_surface(X, Y, Z, cmap="viridis")
-ax.contour(X, Y, Z, lw=3, linestyles="solid", offset=-4)
+ax.contour(X, Y, Z, levels=8, lw=3, linestyles="solid", offset=-4)
 ax.set_xlim(0, 2*Lx)
 ax.set_ylim(0, 2*Ly)
 ax.set_zlim(-6, 6)
