@@ -91,7 +91,7 @@ def time_marching(u0, rtol, atol):
             .flatten(),                     # function that returns du/dt
         t_span=(0, T),                      # (start_time, end_time)
         y0=u0.flatten(),                    # Initial condition
-        method='RK23',                       # 'BDF' or 'Radau' - implicit adaptive time stepping
+        method='BDF',                       # 'BDF' or 'Radau' - implicit adaptive time stepping
         #events=steady_state_event,         # check if ||G(u)|| < tol, can end iteration early
         t_eval=tspan,                       # The specific time points returned
         rtol=rtol,                          # Relative tolerance
@@ -111,7 +111,7 @@ def compute_residuals(t_lst, u_lst):
 
     G_lst = np.zeros(len(u_lst))
 
-    for i in range(len(u_lst)):
+    for i in range(len(u_lst)-1):
         G_lst[i] = np.linalg.norm(get_R(t_lst[i], u_lst[i]))
 
     return G_lst
@@ -138,7 +138,7 @@ def plot_data(u_lst, t_lst) -> None:
     u_val.set_xlim(0, L)
     u_val.grid()
     
-    G_lst = compute_residuals(u_lst)
+    G_lst = compute_residuals(t_lst, u_lst)
     res.plot(t_lst, G_lst)
     res.semilogy()
     res.set_xlabel('τ')
@@ -204,11 +204,25 @@ u_tol = 1e-6                    # tolerance for converged u
 # obtain domain field (x), and fourier wave numbers kx
 X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 
-# define initial conditions of field variable u
+# define forcing actuators
 sigma = 2.4
+m_acts = 6
+actuator_x = np.linspace(8, 58, m_acts)       # gives x={8, 18, 28, 38, 48, 58}
+actuator_y = np.linspace(8, 58, m_acts)       # gives y={8, 18, 28, 38, 48, 58} 
+
+f = np.zeros_like(X)
+for x in range(nx):
+    for y in range(ny):
+        for i in actuator_x:
+            for j in actuator_y:
+                f[x][y] += 1 / (2*np.pi*sigma**2) * np.e**( ((x-i)**2 + (y-j)**2) / (-2*sigma**2) )
+print(actuator_x)
+print(f)
+plt.contourf(X, Y, f)
+plt.show()
+
+# define initial conditions of field variable u
 u0 = np.sin(np.pi*(X/Lx)) + np.sin(np.pi*(Y/Ly))
-f = 0
-#f = 1 / (2*np.pi*sigma**2) * np.e**( -())
 
 # display initial conditions
 fig, (u0_ax, R0_ax) = plt.subplots(1, 2, figsize=(10, 5))
