@@ -225,16 +225,16 @@ def plot_data(u_lst, t_lst) -> None:
 
 ###############################################################################################
 
-def main(u0, T1, T2, T3):
+def main(u0, T1, T2, T3, tol1, tol2, tol3):
 
     # Run 1
-    u_lst1, t_lst1 = adj_descent(u0, 1e-8, 1e-8, T=T1, dt=1)
+    u_lst1, t_lst1 = adj_descent(u0, tol1, tol1, T=T1, dt=1)
     
     # Run 2: starts from the end of run 1
-    u_lst2, t_lst2 = adj_descent(u_lst1[-1], 1e-10, 1e-10, T=T2, dt=1)
+    u_lst2, t_lst2 = adj_descent(u_lst1[-1], tol2, tol2, T=T2, dt=1)
 
     # Run 3: starts from the end of run 2
-    u_lst3, t_lst3 = adj_descent(u_lst2[-1], 1e-12, 1e-12, T=T3, dt=1)
+    u_lst3, t_lst3 = adj_descent(u_lst2[-1], tol3, tol3, T=T3, dt=1)
 
     # 1. Handle the Time Offset
     # Shift t_lst2 so it starts where t_lst1 ended
@@ -247,8 +247,10 @@ def main(u0, T1, T2, T3):
     t_lst = np.concatenate((t_lst1, t_lst2_shifted[1:], t_lst3_shifted[1:]), axis=0)
 
     fig, (u_val, res) = plt.subplots(1, 2, figsize=(10, 5))
-
-    u_val.contourf(X, Y, u_lst[-1])
+    
+    u_final = u_lst[-1]
+    np.nan_to_num(u_final, nan=0)
+    u_val.contourf(X, Y, u_final)
 
     G_lst = compute_residuals(t_lst, u_lst)
     res.plot(t_lst, G_lst)
@@ -289,7 +291,7 @@ X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 # define initial conditions of field variable u
 m = 1
 n = 1
-u0 = np.sin(np.pi*(X/Lx)) + np.sin(3*np.pi*(X/Lx)) + np.sin(2*np.pi*(Y/Ly)) 
+u0 = np.sin(4* np.pi * X/Lx) + np.sin(2 * np.pi * X/Ly) + np.sin(3* np.pi * (Y/Ly+X/Lx) )
 #u0 = np.sin(np.cos(2*np.pi*(m*X/Lx)) + np.cos(2*np.pi*(n*Y/Ly)))
 
 #u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
@@ -329,6 +331,9 @@ f = 0'''
 # converging  new solution
 '''u0 = np.sin(np.pi * X/Lx) + np.sin(np.pi * Y/Ly)'''
 
+# another new solution - 0.0 0.0 0.0 485.41 193.83 0.0 0.0
+'''u0 = np.sin(4* np.pi * X/Lx) + np.sin(2 * np.pi * X/Ly) + np.sin(3* np.pi * (Y/Ly+X/Lx) )'''
+
 # might be E285???
 '''u0 = np.sin(np.pi*(X/Lx)) + np.cos(np.pi*(X/Lx)) + np.sin(np.pi*(Y/Ly)) + np.cos(np.pi*(Y/Ly)) '''
 
@@ -345,6 +350,7 @@ G0_ax.set_title("Initial G")
 plt.show()
 
 # call to main function to execute descent
-u_lst1, t_lst1 = main(u0, T1=50, T2=300, T3=5000)
+u_lst1, t_lst1 = main(u0, T1=10, T2=300, T3=50000, tol1=1e-8, tol2=1e-10, tol3=1e-12)
+#u_lst2, t_lst2 = main(u_lst1[-1], T1=50, T2=1500, T3=5000)
 
 print(get_R(u_lst1[-1]))
