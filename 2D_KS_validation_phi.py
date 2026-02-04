@@ -219,7 +219,6 @@ def main(u0, adj_rtol, adj_atol):
 epsilon = 0.1
 v1, v2 = 1-epsilon, 1-epsilon
 
-Lx, Ly = np.pi, np.pi                 # domain size
 Lx, Ly = np.pi / np.sqrt(v1), np.pi / np.sqrt(v2)
 nx, ny = 64, 64                 # number of collocation points
 T = 25                         # max iteration time
