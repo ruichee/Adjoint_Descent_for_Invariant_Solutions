@@ -247,11 +247,12 @@ def main(u0, T1, T2, T3, tol1, tol2, tol3):
     u_lst = np.concatenate((u_lst1, u_lst2[1:], u_lst3[1:]), axis=0)
     t_lst = np.concatenate((t_lst1, t_lst2_shifted[1:], t_lst3_shifted[1:]), axis=0)
 
-    fig, (u_val, res) = plt.subplots(1, 2, figsize=(10, 5))
+    fig, (u_val, res) = plt.subplots(1, 2, figsize=(12, 5))
     
     u_final = u_lst[-1]
     np.nan_to_num(u_final, nan=0)
-    u_val.contourf(X, Y, u_final)
+    u_cont = u_val.contourf(X, Y, u_final)
+    fig.colorbar(u_cont)
 
     G_lst = compute_residuals(t_lst, u_lst)
     res.plot(t_lst, G_lst)
@@ -261,16 +262,14 @@ def main(u0, T1, T2, T3, tol1, tol2, tol3):
     res.set_xlim(0, t_lst[-1])
     res.grid()
 
-
     plt.show()
-
 
     # check fourier values
     u_k = np.fft.fft2(u_lst[-1])
     func = lambda x,y: np.round(np.abs(u_k[x,y]), 2)
-    print(func(0, 1), func(1, 1), func(1, 0))
-    print(func(2, 0), func(2, 1), func(3, 0), 
-          func(3, 1), func(0, 2), func(1, 2), func(2, 2))
+    print(func(1, 0), func(1, 1), func(0, 1))
+    print(func(0, 2), func(1, 2), func(0, 3), 
+          func(1, 3), func(2, 0), func(2, 1), func(2, 2))
 
     # plot own results (integrated non-conservative form)
     #plot_data(u_lst, t_lst)
@@ -292,14 +291,13 @@ X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 # define initial conditions of field variable u
 m = 1
 n = 1
-u0 = u0 = np.sin(3*np.pi*(X/Lx)) + np.sin(np.pi*(X/Lx)) + np.sin(2*np.pi*(Y/Ly))
-#u0 = np.sin(np.cos(2*np.pi*(m*X/Lx)) + np.cos(2*np.pi*(n*Y/Ly)))
+u0 = np.sin(2*np.pi*(X/Lx)) + np.sin(3*np.pi*(Y/Ly)) + np.cos(2*np.pi*(X/Lx+Y/Ly))
 
 #u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
 
 
 # define forcing actuators
-sigma = 2.4
+'''sigma = 2.4
 m_acts = 6
 actuator_x = np.linspace(8, 58, m_acts)       # gives x={8, 18, 28, 38, 48, 58}
 actuator_y = np.linspace(8, 58, m_acts)       # gives y={8, 18, 28, 38, 48, 58} 
@@ -310,23 +308,20 @@ for x in range(nx):
         for i in actuator_x:
             for j in actuator_y:
                 f[x][y] += 1 / (2*np.pi*sigma**2) * np.e**( ((x-i)**2 + (y-j)**2) / (-2*sigma**2) )
-
+'''
 f=0
 
+# E7 found - 0.0 0.0 0.0 0.0 0.0 0.0 1292.97 (SAME AS REF)
+'''u0 = np.sin(2*np.pi*(X/Lx)) + np.sin(3*np.pi*(Y/Ly)) + np.cos(2*np.pi*(X/Lx+Y/Ly))'''
 
-# E13 found - 2175.17 0.0 0.0 0.0 2175.17 0.0 901.21 (YAY SAME AS REFERENCE)
-'''m = 1
-n = 1
-u0 = np.cos(2*np.pi*(n*Y/Ly)) + np.sin(2*np.pi*(m*X/Lx))
-f = 0 '''
+# E10 found - 0.0 788.4 1869.96 0.0 0.0 788.4 0.0 (SAME AS REF)
+'''u0 = np.sin(np.pi*(-X/Lx + Y/Ly)) - np.sin(3*np.pi*(-X/Lx)) - np.cos(3*np.pi*(Y/Ly))'''
 
-# E13 again 
-'''m = 1
-n = 1
-u0 = np.sin(np.sin(2*np.pi*(m*X/Lx)) + np.cos(2*np.pi*(n*Y/Ly)))
-f = 0'''
+# E13 found - 2175.17 0.0 0.0 0.0 2175.17 0.0 901.21 (SAME AS REF)
+'''u0 = np.cos(2*np.pi*(Y/Ly)) + np.sin(2*np.pi*(X/Lx))'''
+'''u0 = np.sin(np.sin(2*np.pi*(X/Lx)) + np.cos(2*np.pi*(Y/Ly)))'''
 
-# E19 found - 301.96 0.0 0.0 -- 778.95 963.07 0.0 0.0 595.43 0.0 1020.05 (VERY CLOSE TO REFERENCE, flipped e10 and e01)
+# E19 found - 0.0 0.0 301.96 -- 778.95 963.07 0.0 0.0 595.43 0.0 1020.05 (SAME AS REF)
 '''u0 = np.sin(np.pi*(X/Lx)) + np.sin(3*np.pi*(X/Lx)) + np.sin(2*np.pi*(Y/Ly)) '''
 
 # converging  new solution
@@ -339,19 +334,23 @@ f = 0'''
 '''u0 = np.sin(np.pi*(X/Lx)) + np.cos(np.pi*(X/Lx)) + np.sin(np.pi*(Y/Ly)) + np.cos(np.pi*(Y/Ly)) '''
 
 # display initial conditions
-fig, (u0_ax, R0_ax, G0_ax) = plt.subplots(1, 3, figsize=(15, 5))
+fig, (u0_ax, R0_ax, G0_ax) = plt.subplots(1, 3, figsize=(15, 4))
 R = get_R(u0)
 G = get_G(0, u0)
-u0_ax.contourf(X, Y, u0)
-R0_ax.contourf(X, Y, R)
-G0_ax.contourf(X, Y, G)
+u0_cont = u0_ax.contourf(X, Y, u0)
+R0_cont = R0_ax.contourf(X, Y, R)
+G0_cont = G0_ax.contourf(X, Y, G)
 u0_ax.set_title("Initial u")
 R0_ax.set_title("Initial R")
 G0_ax.set_title("Initial G")
+fig.colorbar(u0_cont)
+fig.colorbar(R0_cont)
+fig.colorbar(G0_cont)
 plt.show()
 
 # call to main function to execute descent
-u_lst1, t_lst1 = main(u0, T1=50, T2=300, T3=3000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
+u_lst1, t_lst1 = main(u0, T1=10, T2=100, T3=10000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
 #u_lst2, t_lst2 = main(u_lst1[-1], T1=50, T2=1500, T3=5000)
 
+print(u_lst1[-1])
 print(get_G(t_lst1[-1], u_lst1[-1]))
