@@ -123,7 +123,7 @@ def get_G(t, u):
 
     G = np.real(np.fft.ifft2(G_f))
 
-    print(f"time: {t}, norm: {np.linalg.norm(G)}")
+    print(f"time: {t}, norm: {np.linalg.norm(G) / np.sqrt(nx*ny)}")
 
     return G
 
@@ -183,10 +183,11 @@ def adj_descent(u0, rtol, atol, T, dt):
 
 def compute_residuals(t_lst, u_lst):
 
+    global nx, ny
     G_lst = np.zeros(len(u_lst))
 
     for i in range(len(u_lst)):
-        G_lst[i] = np.linalg.norm(get_G(t_lst[i], u_lst[i]))
+        G_lst[i] = np.linalg.norm(get_G(t_lst[i], u_lst[i])) / np.sqrt(nx*ny)
 
     return G_lst
 
@@ -256,7 +257,7 @@ def main(u0, T1, T2, T3, tol1, tol2, tol3):
     res.plot(t_lst, G_lst)
     res.semilogy()
     res.set_xlabel('τ')
-    res.set_title('Residual of Adjoint Norm ||G(u)||')
+    res.set_title('Residual (RMS of G(u))')
     res.set_xlim(0, t_lst[-1])
     res.grid()
 
@@ -291,7 +292,7 @@ X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 # define initial conditions of field variable u
 m = 1
 n = 1
-u0 = np.sin(4* np.pi * X/Lx) + np.sin(2 * np.pi * X/Ly) + np.sin(3* np.pi * (Y/Ly+X/Lx) )
+u0 = u0 = np.sin(3*np.pi*(X/Lx)) + np.sin(np.pi*(X/Lx)) + np.sin(2*np.pi*(Y/Ly))
 #u0 = np.sin(np.cos(2*np.pi*(m*X/Lx)) + np.cos(2*np.pi*(n*Y/Ly)))
 
 #u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
@@ -350,7 +351,7 @@ G0_ax.set_title("Initial G")
 plt.show()
 
 # call to main function to execute descent
-u_lst1, t_lst1 = main(u0, T1=10, T2=300, T3=50000, tol1=1e-8, tol2=1e-10, tol3=1e-12)
+u_lst1, t_lst1 = main(u0, T1=50, T2=300, T3=3000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
 #u_lst2, t_lst2 = main(u_lst1[-1], T1=50, T2=1500, T3=5000)
 
-print(get_R(u_lst1[-1]))
+print(get_G(t_lst1[-1], u_lst1[-1]))
