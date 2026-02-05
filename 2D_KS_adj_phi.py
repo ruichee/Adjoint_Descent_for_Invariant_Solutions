@@ -77,7 +77,7 @@ def get_R(u):
 
 ###############################################################################################
 
-def get_G(t, u):
+def get_G(t, u, print_res=False):
 
     global KX, KY, f
 
@@ -123,7 +123,8 @@ def get_G(t, u):
 
     G = np.real(np.fft.ifft2(G_f))
 
-    print(f"time: {t}, norm: {np.linalg.norm(G) / np.sqrt(nx*ny)}")
+    if print_res:
+        print(f"time: {t}, norm: {np.linalg.norm(G) / np.sqrt(nx*ny)}")
 
     return G
 
@@ -161,7 +162,7 @@ def adj_descent(u0, rtol, atol, T, dt):
     # Integration: use solve_ivp with method='BDF' to mimic ode15s (stiff solver)
     solution = solve_ivp(
         fun=lambda t,u: \
-            get_G(t, u.reshape(nx, ny))
+            get_G(t, u.reshape(nx, ny), print_res=True)
             .flatten(),                     # function that returns du/dt
         t_span=(0, T),                      # (start_time, end_time)
         y0=u0.flatten(),                    # Initial condition
@@ -291,7 +292,7 @@ X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 # define initial conditions of field variable u
 m = 1
 n = 1
-u0 = np.sin(3*np.pi*X/Lx) + np.sin(np.pi*(-2*X/Lx + Y/Ly)) + np.sin(np.pi*(-3*X/Lx - Y/Ly))
+u0 = np.sin(3*np.pi*Y/Ly) + np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(X/Lx + Y/Ly))
 
 #u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
 
@@ -330,6 +331,9 @@ f=0
 # E34 found - 0.0 404.94 1549.46 -- 368.01 615.94 170.16 778.19 826.38 198.7 146.1 (SAME AS REF)
 '''u0 = np.sin(np.pi*X/Lx) + np.sin(np.pi*(-2*X/Lx + Y/Ly)) + np.sin(np.pi*(-2*X/Lx - Y/Ly))'''
 
+# E45 found - 0.0 797.04 0.0 -- 502.9 0.0 0.0 613.48 411.21 0.0 136.46 (SANE AS REF)
+'''u0 = np.sin(3*np.pi*Y/Ly) + np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(X/Lx + Y/Ly))'''
+
 # converging  new solution
 '''u0 = np.sin(np.pi * X/Lx) + np.sin(np.pi * Y/Ly)'''
 
@@ -355,7 +359,7 @@ fig.colorbar(G0_cont)
 plt.show()
 
 # call to main function to execute descent
-u_lst1, t_lst1 = main(u0, T1=10, T2=100, T3=25000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
+u_lst1, t_lst1 = main(u0, T1=10, T2=100, T3=80000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
 #u_lst2, t_lst2 = main(u_lst1[-1], T1=50, T2=1500, T3=5000)
 
 print(u_lst1[-1])
