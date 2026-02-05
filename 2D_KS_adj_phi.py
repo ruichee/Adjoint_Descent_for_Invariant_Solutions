@@ -293,7 +293,7 @@ X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 # define initial conditions of field variable u
 m = 1
 n = 1
-u0 = np.sin(2*np.pi*Y/Ly) + np.sin(2*np.pi*(X/Lx - Y/Ly)) + np.sin(2*np.pi*(X/Lx + Y/Ly))
+u0 = np.sin(3*np.pi*Y/Ly) - np.sin(2*np.pi*(X/Lx - Y/Ly)) + np.sin(2*np.pi*(X/Lx + Y/Ly))
 
 #u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
 
@@ -337,6 +337,9 @@ f=0
 
 # E45 found - 0.0 797.04 0.0 -- 502.9 0.0 0.0 613.48 411.21 0.0 136.46 (SANE AS REF)
 '''u0 = np.sin(3*np.pi*Y/Ly) + np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(X/Lx + Y/Ly))'''
+
+# E248 found - 1628.9 0.0 0.0 -- 0.0 928.97 0.0 0.0 681.56 0.0 1137.79
+'''u0 = np.sin(3*np.pi*Y/Ly) - np.sin(2*np.pi*(X/Lx - Y/Ly)) + np.sin(2*np.pi*(X/Lx + Y/Ly))'''
 
 # converging  new solution
 '''u0 = np.sin(np.pi * X/Lx) + np.sin(np.pi * Y/Ly)'''
