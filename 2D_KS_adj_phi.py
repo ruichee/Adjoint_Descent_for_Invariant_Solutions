@@ -293,25 +293,11 @@ X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 # define initial conditions of field variable u
 m = 1
 n = 1
-u0 = np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(X/Lx + Y/Ly)) + np.sin(2*np.pi*X/Lx) + np.sin(2*np.pi*Y/Ly)
-
+u0 = np.sin(2*np.pi*(X/Lx)) + np.sin(2*np.pi*(Y/Ly)) + np.sin(np.pi*(X/Lx)) + np.sin(np.pi*(Y/Ly))
+f=0
 #u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
 
-
-# define forcing actuators
-'''sigma = 2.4
-m_acts = 6
-actuator_x = np.linspace(8, 58, m_acts)       # gives x={8, 18, 28, 38, 48, 58}
-actuator_y = np.linspace(8, 58, m_acts)       # gives y={8, 18, 28, 38, 48, 58} 
-
-f = np.zeros_like(X)
-for x in range(nx):
-    for y in range(ny):
-        for i in actuator_x:
-            for j in actuator_y:
-                f[x][y] += 1 / (2*np.pi*sigma**2) * np.e**( ((x-i)**2 + (y-j)**2) / (-2*sigma**2) )
-'''
-f=0
+###############################################################################################
 
 # E2 found - 2366.97 0.0 0.0 0.0 0.0 1866.39 0.0 (SAME AS REF)
 '''u0 = np.cos(np.pi*X/Lx) + np.cos(np.pi*(-X/Lx + 2*Y/Ly)) + np.cos(np.pi*(-X/Lx - 2*Y/Ly))'''
@@ -353,6 +339,8 @@ f=0
 # might be E285???
 '''u0 = np.sin(np.pi*(X/Lx)) + np.cos(np.pi*(X/Lx)) + np.sin(np.pi*(Y/Ly)) + np.cos(np.pi*(Y/Ly)) '''
 
+###############################################################################################
+
 # display initial conditions
 fig, (u0_ax, R0_ax, G0_ax) = plt.subplots(1, 3, figsize=(15, 4))
 R = get_R(u0)
@@ -369,7 +357,7 @@ fig.colorbar(G0_cont)
 plt.show()
 
 # call to main function to execute descent
-u_lst1, t_lst1 = main(u0, T1=10, T2=100, T3=8000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
+u_lst1, t_lst1 = main(u0, T1=10, T2=100, T3=30000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
 #u_lst2, t_lst2 = main(u_lst1[-1], T1=50, T2=1500, T3=5000)
 
 print(u_lst1[-1])
