@@ -187,7 +187,7 @@ def compute_residuals(t_lst, u_lst):
     global nx, ny
     G_lst = np.zeros(len(u_lst))
 
-    for i in range(len(u_lst)):
+    for i in tqdm(range(len(u_lst))):
         G_lst[i] = np.linalg.norm(get_G(t_lst[i], u_lst[i])) / np.sqrt(nx*ny)
 
     return G_lst
@@ -255,6 +255,14 @@ def main(u0, T1, T2, T3, tol1, tol2, tol3):
     u_cont = u_val.contourf(X, Y, u_final)
     fig.colorbar(u_cont)
 
+    # check fourier values
+    u_k = np.fft.fft2(u_final)
+    func = lambda x,y: np.round(np.abs(u_k[x,y]), 2)
+    print(func(1, 0), func(1, 1), func(0, 1))
+    print(func(0, 2), func(1, 2), func(0, 3), 
+          func(1, 3), func(2, 0), func(2, 1), func(2, 2))
+
+    # plot residuals
     G_lst = compute_residuals(t_lst, u_lst)
     res.plot(t_lst, G_lst)
     res.semilogy()
@@ -264,13 +272,6 @@ def main(u0, T1, T2, T3, tol1, tol2, tol3):
     res.grid()
 
     plt.show()
-
-    # check fourier values
-    u_k = np.fft.fft2(u_lst[-1])
-    func = lambda x,y: np.round(np.abs(u_k[x,y]), 2)
-    print(func(1, 0), func(1, 1), func(0, 1))
-    print(func(0, 2), func(1, 2), func(0, 3), 
-          func(1, 3), func(2, 0), func(2, 1), func(2, 2))
 
     # plot own results (integrated non-conservative form)
     #plot_data(u_lst, t_lst)
@@ -292,7 +293,7 @@ X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 # define initial conditions of field variable u
 m = 1
 n = 1
-u0 = np.sin(3*np.pi*Y/Ly) + np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(X/Lx + Y/Ly))
+u0 = np.sin(2*np.pi*Y/Ly) + np.sin(2*np.pi*(X/Lx - Y/Ly)) + np.sin(2*np.pi*(X/Lx + Y/Ly))
 
 #u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
 
@@ -324,6 +325,9 @@ f=0
 # E13 found - 2175.17 0.0 0.0 0.0 2175.17 0.0 901.21 (SAME AS REF)
 '''u0 = np.cos(2*np.pi*(Y/Ly)) + np.sin(2*np.pi*(X/Lx))'''
 '''u0 = np.sin(np.sin(2*np.pi*(X/Lx)) + np.cos(2*np.pi*(Y/Ly)))'''
+
+# E14 found - 0.0 0.0 0.0 0.0 5086.57 0.0 0.0 (SAME AS REF)
+'''u0 = np.sin(2*np.pi*Y/Ly) + np.sin(2*np.pi*(X/Lx - Y/Ly)) + np.sin(2*np.pi*(X/Lx + Y/Ly))'''
 
 # E19 found - 0.0 0.0 301.96 -- 778.95 963.07 0.0 0.0 595.43 0.0 1020.05 (SAME AS REF)
 '''u0 = np.sin(np.pi*(X/Lx)) + np.sin(3*np.pi*(X/Lx)) + np.sin(2*np.pi*(Y/Ly)) '''
@@ -359,7 +363,7 @@ fig.colorbar(G0_cont)
 plt.show()
 
 # call to main function to execute descent
-u_lst1, t_lst1 = main(u0, T1=10, T2=100, T3=80000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
+u_lst1, t_lst1 = main(u0, T1=10, T2=100, T3=5000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
 #u_lst2, t_lst2 = main(u_lst1[-1], T1=50, T2=1500, T3=5000)
 
 print(u_lst1[-1])
