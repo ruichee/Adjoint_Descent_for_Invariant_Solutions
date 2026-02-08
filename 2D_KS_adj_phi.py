@@ -133,10 +133,10 @@ def get_G(t, u, print_res=False):
 def steady_state_event(t, u):
 
     # rhs can either be get_R() or get_G()
-    dudt = get_G(u)
+    dudt = get_G(t, u)
 
     # compute R or G as a magnitude 
-    change_in_u = np.linalg.norm(dudt)
+    change_in_u = np.linalg.norm(dudt) / np.sqrt(nx*ny)
 
     # set tolerance for ending iteration
     global u_tol
@@ -227,7 +227,37 @@ def plot_data(u_lst, t_lst) -> None:
 '''
 ###############################################################################################
 
+def plot_init(u0) -> None:
+
+    # setup axis and figure
+    fig, (u0_ax, R0_ax, G0_ax) = plt.subplots(1, 3, figsize=(15, 4))
+
+    # obtain R and G fields
+    R = get_R(u0)
+    G = get_G(0, u0)
+
+    # plot contours 
+    u0_cont = u0_ax.contourf(X, Y, u0)
+    R0_cont = R0_ax.contourf(X, Y, R)
+    G0_cont = G0_ax.contourf(X, Y, G)
+
+    # set titles and add colorbars
+    u0_ax.set_title("Initial u")
+    R0_ax.set_title("Initial R")
+    G0_ax.set_title("Initial G")
+    fig.colorbar(u0_cont)
+    fig.colorbar(R0_cont)
+    fig.colorbar(G0_cont)
+
+    # display plots
+    plt.show()
+
+###############################################################################################
+
 def main(u0, T1, T2, T3, tol1, tol2, tol3):
+
+    # plot initial fields
+    plot_init(u0)
 
     # Run 1
     u_lst1, t_lst1 = adj_descent(u0, tol1, tol1, T=T1, dt=1)
@@ -258,9 +288,11 @@ def main(u0, T1, T2, T3, tol1, tol2, tol3):
     # check fourier values
     u_k = np.fft.fft2(u_final)
     func = lambda x,y: np.round(np.abs(u_k[x,y]), 2)
+    print("\nFourier Coefficients")
     print(func(1, 0), func(1, 1), func(0, 1))
     print(func(0, 2), func(1, 2), func(0, 3), 
           func(1, 3), func(2, 0), func(2, 1), func(2, 2))
+    print()
 
     # plot residuals
     G_lst = compute_residuals(t_lst, u_lst)
@@ -283,9 +315,8 @@ def main(u0, T1, T2, T3, tol1, tol2, tol3):
 # define variables 
 Lx, Ly = 10, 10                 # domain size
 nx, ny = 64, 64                 # number of collocation points
-T = 500                         # max iteration time
 dt = 1                          # iteration step 
-u_tol = 1e-6                    # tolerance for converged u
+u_tol = 1e-8                    # tolerance for converged u
 
 # obtain domain field (x), and fourier wave numbers kx
 X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
@@ -293,87 +324,19 @@ X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 # define initial conditions of field variable u
 m = 1
 n = 1
-u0 = np.cos(np.pi*(X/Lx)) - np.cos(2*np.pi*(Y/Ly)) + np.cos(3*np.pi*(X/Lx)) + np.cos(3*np.pi*(Y/Ly)) 
+u0 = np.cos(np.pi*(X/Lx + Y/Ly)) + np.cos(np.pi*(X/Lx)) + np.cos(np.pi*(Y/Ly)) 
 f=0
-#u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
+u0 = np.cos(2*np.pi*(n*Y/Ly + m*X/Lx)) - np.sin(np.cos(2*np.pi*(m*X/Lx))) - np.cos(np.cos(2*np.pi*(n*Y/Ly)))
 
-###############################################################################################
-
-# E2 found - 2366.97 0.0 0.0 0.0 0.0 1866.39 0.0 (SAME AS REF)
-'''u0 = np.cos(np.pi*X/Lx) + np.cos(np.pi*(-X/Lx + 2*Y/Ly)) + np.cos(np.pi*(-X/Lx - 2*Y/Ly))'''
-
-# E7 found - 0.0 0.0 0.0 0.0 0.0 0.0 1292.97 (SAME AS REF)
-'''u0 = np.sin(2*np.pi*(X/Lx)) + np.sin(3*np.pi*(Y/Ly)) + np.cos(2*np.pi*(X/Lx+Y/Ly))'''
-
-# E9 found - 0.0 0.0 0.0 -- 0.0 0.0 0.0 0.0 0.0 0.0 0.0 (SAME AS REF)
-'''u0 = np.sin(np.pi*(X/Lx + Y/Ly)) - np.sin(2*np.pi*(Y/Ly)) '''
-
-# E10 found - 0.0 788.4 1869.96 0.0 0.0 788.4 0.0 (SAME AS REF)
-'''u0 = np.sin(np.pi*(-X/Lx + Y/Ly)) - np.sin(3*np.pi*(-X/Lx)) - np.cos(3*np.pi*(Y/Ly))'''
-
-# E13 found - 2175.17 0.0 0.0 0.0 2175.17 0.0 901.21 (SAME AS REF)
-'''u0 = np.cos(2*np.pi*(Y/Ly)) + np.sin(2*np.pi*(X/Lx))'''
-'''u0 = np.sin(np.sin(2*np.pi*(X/Lx)) + np.cos(2*np.pi*(Y/Ly)))'''
-
-# E14 found - 0.0 0.0 0.0 0.0 5086.57 0.0 0.0 (SAME AS REF)
-'''u0 = np.sin(2*np.pi*Y/Ly) + np.sin(2*np.pi*(X/Lx - Y/Ly)) + np.sin(2*np.pi*(X/Lx + Y/Ly))'''
-
-# E19 found - 0.0 0.0 301.96 -- 778.95 963.07 0.0 0.0 595.43 0.0 1020.05 (SAME AS REF)
-'''u0 = np.sin(np.pi*(X/Lx)) + np.sin(3*np.pi*(X/Lx)) + np.sin(2*np.pi*(Y/Ly)) '''
-
-# E23 found - 0.0 0.0 2000.84 -- 2050.04 0.0 1060.15 0.0 2341.38 125.17 1208.1
-'''u0 = np.cos(2*np.pi*(X/Lx)) + np.cos(2*np.pi*(Y/Ly)) + np.cos(3*np.pi*(X/Lx))'''
-
-# E34 found - 0.0 404.94 1549.46 -- 368.01 615.94 170.16 778.19 826.38 198.7 146.1 (SAME AS REF)
-'''u0 = np.sin(np.pi*X/Lx) + np.sin(np.pi*(-2*X/Lx + Y/Ly)) + np.sin(np.pi*(-2*X/Lx - Y/Ly))'''
-
-# E35 found - 0.0 419.25 0.0 -- 1491.4 0.0 0.0 856.84 1491.4 0.0 989.43 (SAME AS REF)
-'''u0 = np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(X/Lx + Y/Ly)) + np.sin(2*np.pi*X/Lx) + np.sin(2*np.pi*Y/Ly)'''
-
-# E45 found - 0.0 797.04 0.0 -- 502.9 0.0 0.0 613.48 411.21 0.0 136.46 (SANE AS REF)
-'''u0 = np.sin(3*np.pi*Y/Ly) + np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(X/Lx + Y/Ly))'''
-
-# E231 found - 1459.68 1816.42 1459.68 -- 719.75 87.59 21.08 347.97 719.75 87.59 234.69 (SAME AS REF)
-'''u0 = np.sin(np.pi*(X/Lx + Y/Ly)) - np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(Y/Ly)) '''\
-
-# E234 found - 664.18 231.42 1469.74 -- 173.3 35.9 13.51 2.46 259.38 176.31 38.56 (CLOSE TO REF)
-'''u0 = np.cos(np.pi*(X/Lx)) - np.cos(2*np.pi*(Y/Ly)) + np.cos(3*np.pi*(X/Lx)) + np.cos(3*np.pi*(Y/Ly)) '''
-
-# E248 found - 1628.9 0.0 0.0 -- 0.0 928.97 0.0 0.0 681.56 0.0 1137.79
-'''u0 = np.sin(3*np.pi*Y/Ly) - np.sin(2*np.pi*(X/Lx - Y/Ly)) + np.sin(2*np.pi*(X/Lx + Y/Ly))'''
-
-# converging  new solution
-'''u0 = np.sin(np.pi * X/Lx) + np.sin(np.pi * Y/Ly)'''
-
-# another new solution - 0.0 0.0 0.0 485.41 193.83 0.0 0.0
-'''u0 = np.sin(4* np.pi * X/Lx) + np.sin(2 * np.pi * X/Ly) + np.sin(3* np.pi * (Y/Ly+X/Lx) )'''
-
-# new solution - 2727.57 475.75 2727.57 -- 145.15 195.94 885.87 536.15 145.15 195.94 429.09
-'''u0 = np.cos(np.pi*(X/Lx)) + np.cos(np.pi*(Y/Ly)) + np.cos(3*np.pi*(X/Lx)) + np.cos(3*np.pi*(Y/Ly)) '''
-
-# might be E285???
-'''u0 = np.sin(np.pi*(X/Lx)) + np.cos(np.pi*(X/Lx)) + np.sin(np.pi*(Y/Ly)) + np.cos(np.pi*(Y/Ly)) '''
-
-###############################################################################################
-
-# display initial conditions
-fig, (u0_ax, R0_ax, G0_ax) = plt.subplots(1, 3, figsize=(15, 4))
-R = get_R(u0)
-G = get_G(0, u0)
-u0_cont = u0_ax.contourf(X, Y, u0)
-R0_cont = R0_ax.contourf(X, Y, R)
-G0_cont = G0_ax.contourf(X, Y, G)
-u0_ax.set_title("Initial u")
-R0_ax.set_title("Initial R")
-G0_ax.set_title("Initial G")
-fig.colorbar(u0_cont)
-fig.colorbar(R0_cont)
-fig.colorbar(G0_cont)
-plt.show()
+# define iteration time variables
+T1, tol1 = 10, 1e-8
+T2, tol2 = 100, 1e-10
+T3, tol3 = 2000, 1e-14
 
 # call to main function to execute descent
-u_lst1, t_lst1 = main(u0, T1=10, T2=100, T3=200000, tol1=1e-8, tol2=1e-10, tol3=1e-14)
-#u_lst2, t_lst2 = main(u_lst1[-1], T1=50, T2=1500, T3=5000)
+u_lst1, t_lst1 = main(u0, T1=T1, T2=T2, T3=T3, tol1=tol1, tol2=tol2, tol3=tol3)
 
+print("\nFinal u(x,y)")
 print(u_lst1[-1])
+print("\nFinal G(u)")
 print(get_G(t_lst1[-1], u_lst1[-1]))
