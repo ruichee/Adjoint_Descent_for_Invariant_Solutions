@@ -182,19 +182,24 @@ def adj_descent(u0: np.ndarray[tuple[int, int], float], rtol: float, atol: float
 
 ###############################################################################################
 
-def compute_residuals(t_lst: list, u_lst: list[np.ndarray[tuple[int, int], float]], steps: int =100):
+def compute_residuals(t_lst: list, u_lst: list[np.ndarray[tuple[int, int], float]], steps: int = 1000):
 
     global nx, ny
+    N = len(u_lst)
 
     # initialize list for residual values (RMS of G(u)) at each time step
-    steps = min(steps, len(u_lst))
-    G_lst_trunc = np.zeros(steps)
-    t_lst_trunc = np.zeros(steps)
+    steps = min(steps, N)
+    G_lst_trunc = np.zeros(steps+1)
+    t_lst_trunc = np.zeros(steps+1)
 
-    # iterate through u at each time step to find corresponding RMS of G(u), with progress bar
-    for i in tqdm(np.arange(0, len(u_lst), len(u_lst)//steps)):
-        G_lst_trunc[i] = np.linalg.norm(get_G(t_lst[i], u_lst[i])) / np.sqrt(nx*ny)
-        t_lst_trunc[i] = t_lst[i]
+    # iterate through u at each time step to find corresponding RMS of G(u), for just "steps" number of points
+    for i in tqdm(range(steps)):
+        G_lst_trunc[i] = np.linalg.norm(get_G(t_lst[int(N/steps*i)], u_lst[int(N/steps*i)])) / np.sqrt(nx*ny)
+        t_lst_trunc[i] = t_lst[int(N/steps*i)]
+    
+    # add last point as well
+    G_lst_trunc[-1] = np.linalg.norm(get_G(t_lst[-1], u_lst[-1])) / np.sqrt(nx*ny)
+    t_lst_trunc[-1] = t_lst[-1]
 
     return t_lst_trunc, G_lst_trunc
 
@@ -268,9 +273,9 @@ def main(u0: np.ndarray[tuple[int, int], float],
         u_lst1, t_lst1 = adj_descent(u_prev, tol, tol, T=T, dt=1)
         u_prev = u_lst1[-1]
 
-        t_lst1_shifted = t_lst1 + t_lst[-1] + dt
+        t_lst1_shifted = t_lst1 + t_lst[-1] 
         u_lst = np.concatenate((u_lst, u_lst1[1:]), axis=0)
-        t_lst = np.concatenate((t_lst, t_lst1_shifted), axis=0)
+        t_lst = np.concatenate((t_lst, t_lst1_shifted[1:]), axis=0)
 
     '''
     # Run 1
@@ -331,8 +336,8 @@ f = 0
 T1, tol1 = 50, 1e-8
 T2, tol2 = 500, 1e-10
 T3, tol3 = 5000, 1e-12
-T4, tol4 = 30000, 1e-14
-T5, tol5 = 150000, 1e-16
+T4, tol4 = 10000, 1e-14
+T5, tol5 = 20000, 1e-16
 stages = ((T1, tol1), (T2, tol2), (T3, tol3), (T4, tol4), (T5, tol5))
 
 # call to main function to execute descent
