@@ -307,9 +307,9 @@ def main(u0: np.ndarray[tuple[int, int], float],
     func = lambda x,y: np.round(np.abs(u_k[x,y]), 2)
     print("\nFourier Coefficients")
     print(func(1, 0), func(1, 1), func(0, 1))
-    print(f"e(2,0): {func(0, 2)}, \t e(2,1): {func(1, 2)}, \t e(3,0): {func(0, 3)}, \t e(3,1): {func(1, 3)}, \t \
-          e(0,2): {func(2, 0)}, \t e(1,2): {func(2, 1)}, \t e(2,2): {func(2, 2)}")
-    print(f"e(0,3): {func(3, 0)}, \t e(1,3): {func(3, 1)}")
+    print(f"e(2,0): {func(0, 2)}, e(2,1): {func(1, 2)}, e(3,0): {func(0, 3)}, e(3,1): {func(1, 3)}, \
+          e(0,2): {func(2, 0)}, e(1,2): {func(2, 1)}, e(2,2): {func(2, 2)}")
+    print(f"e(0,3): {func(3, 0)}, e(1,3): {func(3, 1)}")
     print()
 
     # plot final results 
@@ -329,16 +329,16 @@ dt = 1                          # iteration step
 X, KX, Y, KY = get_vars(2*Lx, 2*Ly, nx, ny)
 
 # define initial conditions of field variable u
-u0 = -np.sin(np.pi*(2*X/Lx + Y/Ly)) - np.sin(np.pi*(X/Lx - 2*Y/Ly)) 
+u0 = np.sin(np.pi*(-X/Lx + Y/Ly)) + np.sin(3*np.pi*(X/Lx)) - np.cos(2*np.pi*(Y/Ly))
 f = 0
 #u0 = np.loadtxt("output_u.csv", delimiter=',')
 
 # define iteration time variables
-T1, tol1 = 20, 1e-8
+T1, tol1 = 10, 1e-8
 T2, tol2 = 100, 1e-10
-T3, tol3 = 500, 1e-12
-T4, tol4 = 1000, 1e-14
-T5, tol5 = 20000, 1e-16
+T3, tol3 = 2000, 1e-12
+T4, tol4 = 30000, 1e-14
+T5, tol5 = 300000, 1e-16
 stages = ((T1, tol1), (T2, tol2), (T3, tol3), (T4, tol4), (T5, tol5))
 stage = 0
 

@@ -41,6 +41,9 @@
 # E45 found - 0.0 797.04 0.0 -- 502.9 0.0 0.0 613.48 411.21 0.0 136.46 
 '''u0 = np.sin(3*np.pi*Y/Ly) + np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(X/Lx + Y/Ly))'''
 
+# E162 found - 609.02 189.9 606.6 -- 251.58 1006.11 974.24 229.92 251.03 1008.14 477.01
+'''u0 = np.sin(np.pi*(-X/Lx + Y/Ly)) + np.sin(3*np.pi*(X/Lx)) - np.cos(2*np.pi*(Y/Ly))'''
+
 # E229 found - 1398.75 416.66 0.0 -- 425.31 221.33 0.0 213.66 133.5 301.22 142.05
 '''u0 = np.sin(2*np.pi*(X/Lx)) - np.sin(np.pi*(Y/Ly)) + np.sin(np.pi*(X/Lx - Y/Ly)) + np.sin(np.pi*(X/Lx + Y/Ly)) '''
 
