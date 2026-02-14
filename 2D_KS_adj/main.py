@@ -1,7 +1,8 @@
 import numpy as np
 from adj_descent import adj_descent
 from plotting import Plotting
-from input_vars import stage
+import input_vars
+from input_vars import stages, u0, dt
 
 
 def main(u0: np.ndarray[tuple[int, int], float], 
@@ -14,10 +15,8 @@ def main(u0: np.ndarray[tuple[int, int], float],
     u_lst = [u0]
     t_lst = [0]
 
-    global stage 
-
     for T, tol in stages:
-        stage += 1
+        input_vars.stage += 1
         u_lst1, t_lst1 = adj_descent(u_prev, tol, tol, T=T, dt=dt)
         u_prev = u_lst1[-1]
 
@@ -42,4 +41,8 @@ def main(u0: np.ndarray[tuple[int, int], float],
     Plotting.plot_final(u_lst, t_lst)
 
     # save entire u_final array data to output_u.csv file
-    np.savetxt('fixed_points/output_u.dat', u_final, delimiter=',', fmt='%.2f')
+    np.savetxt(r'2D_KS_adj\fixed_points\output_u.dat', u_final, delimiter=',', fmt='%.2f')
+
+
+if __name__ == "__main__":
+    main(u0, stages, dt)

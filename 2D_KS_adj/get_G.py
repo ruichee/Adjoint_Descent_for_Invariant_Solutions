@@ -1,4 +1,5 @@
 import numpy as np
+import input_vars
 from get_R import get_R
 from dealiase import dealiase
 from input_vars import stage, nx, ny, KX, KY, f
@@ -9,7 +10,7 @@ def get_G(t: float, u: np.ndarray[tuple[int, int], float],
     global stage, nx, ny, KX, KY, f
 
     # first obtain R and its fourier transform
-    R = get_R(u, f, KX, KY)
+    R = get_R(t, u)
     R_f = np.fft.fft2(R)
 
     # non-linear term (1) in fourier space
@@ -43,7 +44,7 @@ def get_G(t: float, u: np.ndarray[tuple[int, int], float],
 
     # add all terms together in fourier space
     G_f = np.fft.fft2(non_lin_term_1 + non_lin_term_2 + lin_term)
-    G_f = dealiase(G_f, KX, KY)
+    G_f = dealiase(G_f)
 
     # set mean flow = 0, no DC component/offset
     mask = (KX==0) * (KY==0)
@@ -54,6 +55,6 @@ def get_G(t: float, u: np.ndarray[tuple[int, int], float],
 
     # print to track iteration progress, use to check for sticking points
     if print_res:
-        print(f"stage: {stage}, \t time: {t}, \t norm: {np.linalg.norm(G) / np.sqrt(nx*ny)}")
+        print(f"stage: {input_vars.stage}, \t time: {t}, \t norm: {np.linalg.norm(G) / np.sqrt(nx*ny)}")
 
     return G

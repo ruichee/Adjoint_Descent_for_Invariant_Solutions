@@ -2,7 +2,7 @@ import numpy as np
 from dealiase import dealiase
 from input_vars import KX, KY, f
 
-def get_R(u: np.ndarray[tuple[int, int], float]) -> np.ndarray[tuple[int, int], float]: 
+def get_R(t, u: np.ndarray[tuple[int, int], float], print_res=False) -> np.ndarray[tuple[int, int], float]: 
 
     # obtain u in fourier space
     u_f = np.fft.fft2(u)                        # bring u into fourier
@@ -30,5 +30,9 @@ def get_R(u: np.ndarray[tuple[int, int], float]) -> np.ndarray[tuple[int, int], 
 
     # convert back to physical space
     R = np.real(np.fft.ifft2(R_f)) + f         # obtain R(u)
+
+    # print to track iteration progress, use to check for sticking points
+    if print_res:
+        print(f"time: {t}, \t ||R||: {np.linalg.norm(R)}")
     
     return R

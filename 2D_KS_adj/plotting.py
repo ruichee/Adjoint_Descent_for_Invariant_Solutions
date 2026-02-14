@@ -7,13 +7,21 @@ from residual import compute_residuals
 
 class Plotting:
 
+    def plot_from_data(path):
+
+        u = np.loadtxt(path)
+        plt.contourf(X, Y, u, figsize=(7, 7))
+        plt.show()
+
+    ###############################################################################################
+
     def plot_initial(u0: np.ndarray[tuple[int, int], float]) -> None:
 
         # setup axis and figure
         fig, (u0_ax, R0_ax, G0_ax) = plt.subplots(1, 3, figsize=(15, 4))
 
         # obtain R and G fields
-        R = get_R(u0)
+        R = get_R(0, u0)
         G = get_G(0, u0)
 
         # plot contours 

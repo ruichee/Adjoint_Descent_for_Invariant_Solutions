@@ -1,6 +1,7 @@
 import numpy as np
+from input_vars import KX, KY
 
-def dealiase(ff, KX, KY) -> np.ndarray:
+def dealiase(ff) -> np.ndarray:
 
     kx_abs = np.absolute(KX)
     ky_abs = np.absolute(KY)

@@ -1,6 +1,7 @@
 import numpy as np
-import tqdm as tqdm
+from tqdm import tqdm
 from get_G import get_G
+from input_vars import nx, ny
 
 def compute_residuals(t_lst: list, u_lst: list[np.ndarray[tuple[int, int], float]], steps: int = 1000):
 
