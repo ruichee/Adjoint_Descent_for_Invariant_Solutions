@@ -47,7 +47,7 @@ def compute_leading_eigenvalue(u_fixed, nx, ny):
     # --- FIX 2: Expand subspace (ncv) and relax tolerance ---
     # ncv=30 gives it 30 vectors to untangle the clustered eigenvalues
     # tol=1e-4 prevents it from obsessing over machine-precision accuracy
-    eigenvalues, eigenvectors = eigs(J_op, k=1, which='LR', ncv=30, tol=1e-4)
+    eigenvalues, eigenvectors = eigs(J_op, k=1, which='LR', ncv=30, tol=1e-5)
     
     leading_eval = np.real(eigenvalues[0])
     print(f"Predicted Slope (Leading Eigenvalue): {leading_eval:.6f}")

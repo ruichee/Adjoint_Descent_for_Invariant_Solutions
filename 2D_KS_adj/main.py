@@ -17,12 +17,19 @@ def main(u0: np.ndarray[tuple[int, int], float],
 
     for T, tol in stages:
         input_vars.stage += 1
+        if T == 0:
+             continue
         u_lst1, t_lst1 = adj_descent(u_prev, tol, tol, T=T, dt=dt)
         u_prev = u_lst1[-1]
 
         t_lst1_shifted = t_lst1 + t_lst[-1] 
         u_lst = np.concatenate((u_lst, u_lst1[1:]), axis=0)
         t_lst = np.concatenate((t_lst, t_lst1_shifted[1:]), axis=0)
+
+    '''from scipy.optimize import newton_krylov
+    from get_R import get_R
+    u_final = newton_krylov(lambda u: get_R(0, u), u_lst[-1], iter=100, f_tol=1e-8, method='lgmres', verbose=True)
+    print(np.linalg.norm(get_R(0, u_final)))'''
 
     # extract final u field
     u_final = u_lst[-1]
@@ -49,15 +56,16 @@ if __name__ == "__main__":
     #print(np.linalg.norm(get_R(0, np.loadtxt(r"2D_KS_adj\fixed_points\output_u.dat", delimiter=" "))))
 
     # define initial conditions of field variable u
-    u0 = np.sin(np.pi*(2*X/Lx)) + np.sin(np.pi*(2*Y/Ly)) + np.sin(np.pi*(X/Lx)) + np.sin(np.pi*(Y/Ly)) 
-    #u0 = np.loadtxt("output_u.csv", delimiter=',')
+    u0 = np.cos(np.pi*(3*X/Lx)) + np.cos(np.pi*(3*Y/Ly)) + np.cos(np.pi*(X/Lx)) + np.cos(np.pi*(Y/Ly))
+    #u0 = np.loadtxt(r"2D_KS_adj\fixed_points\output_u.dat", delimiter=' ')
 
     # define iteration time variables
     T1, tol1 = 10, 1e-8
-    T2, tol2 = 10, 1e-10
-    T3, tol3 = 400, 1e-12
-    T4, tol4 = 20000, 1e-14
-    T5, tol5 = 50000, 1e-16
+    T2, tol2 = 50, 1e-10
+    T3, tol3 = 1000, 1e-12
+    T4, tol4 = 50000, 1e-14
+    T5, tol5 = 300000, 1e-16
+    T6, tol6 = 10000, 1e-16
     stages = ((T1, tol1), (T2, tol2), (T3, tol3), (T4, tol4), (T5, tol5))
 
 
