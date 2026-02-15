@@ -23,7 +23,7 @@ def compute_leading_eigenvalue(u_fixed, nx, ny):
     R_fixed_flat = get_R(0, u_fixed_2d).flatten()
     
     # --- FIX 1: Increase epsilon to survive the noise floor ---
-    epsilon = 1e-4 
+    epsilon = 1e-5 
     
     def jacobian_action(v_1d):
         u_perturbed_1d = u_flat + epsilon * v_1d
@@ -109,8 +109,8 @@ def compute_N(u_hat):
     u_y_f = 1j * KY * u_f
     
     # 3. Match your exact complex ifft2 (without np.real cast)
-    u_x = np.fft.ifft2(u_x_f)
-    u_y = np.fft.ifft2(u_y_f)
+    u_x = np.real(np.fft.ifft2(u_x_f))
+    u_y = np.real(np.fft.ifft2(u_y_f))
     
     # 4. Match your exact nonlinear term
     u_sq_terms = -0.5 * (u_x*u_x + u_y*u_y)
@@ -146,27 +146,30 @@ def etdrk4_step(v, E, E2, Q, f1, f2, f3):
 # ==========================================
 # 4. INITIALIZATION & NOISE INJECTION
 # ==========================================
-dt = 0.05      # ETDRK4 can comfortably take large steps
+dt = 0.01      # ETDRK4 can comfortably take large steps
 T_end = 200.0  
 num_steps = int(T_end / dt)
 
-# Generate structurally safe noise (Low-frequency, strictly zero-mean)
+# artificial injection of noise if time step is too large to inject it numerically
+'''# Generate structurally safe noise (Low-frequency, strictly zero-mean)
 np.random.seed(42)
 raw_noise = np.random.randn(nx, ny)
 noise_hat = np.fft.fft2(raw_noise)
 
 # Filter out high frequencies to avoid hyperdiffusion shock
 noise_hat[(np.abs(KX) > 3) | (np.abs(KY) > 3)] = 0.0
+
 # STRICTLY enforce zero spatial mean
 noise_hat[0, 0] = 0.0 
 
 smooth_noise = np.real(np.fft.ifft2(noise_hat))
 epsilon = 1e-12
-smooth_noise = (smooth_noise / np.linalg.norm(smooth_noise)) * epsilon
+smooth_noise = (smooth_noise / np.linalg.norm(smooth_noise)) * epsilon'''
 
 # Create the perturbed starting state in Fourier space
 u_fixed_2d = u_fixed.reshape((nx, ny))
-u_imperfect = u_fixed_2d + smooth_noise
+u_imperfect = u_fixed_2d 
+'''+ smooth_noise'''
 
 # Initial condition for the solver
 u_hat = np.fft.fft2(u_imperfect) * dealias_mask
@@ -227,7 +230,7 @@ plt.ylim(1e-13, 1e4)
 plt.xlim(-10, 210)
 plt.xlabel('Time (t)', fontsize=12)
 plt.ylabel('||U(t) - U(t_0)||_2', fontsize=12)
-plt.title('Stability Evolution (ETDRK4 Operator Exact Match)', fontsize=14)
+plt.title('L2-norm of difference over time', fontsize=14)
 plt.grid(True, which="both", ls="-", alpha=0.3)
 plt.legend(loc='lower right', fontsize=11)
 plt.show()
