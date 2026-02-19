@@ -56,15 +56,15 @@ if __name__ == "__main__":
     #print(np.linalg.norm(get_R(0, np.loadtxt(r"2D_KS_adj\fixed_points\output_u.dat", delimiter=" "))))
 
     # define initial conditions of field variable u
-    u0 = np.cos(np.pi*(3*X/Lx)) + np.cos(np.pi*(3*Y/Ly)) + np.cos(np.pi*(X/Lx)) + np.cos(np.pi*(Y/Ly))
+    u0 = np.cos(np.pi*X/Lx) + np.cos(np.pi*(-X/Lx + 2*Y/Ly)) + np.cos(np.pi*(-X/Lx - 2*Y/Ly))
     #u0 = np.loadtxt(r"2D_KS_adj\fixed_points\output_u.dat", delimiter=' ')
 
     # define iteration time variables
     T1, tol1 = 10, 1e-8
-    T2, tol2 = 50, 1e-10
+    T2, tol2 = 40, 1e-10
     T3, tol3 = 1000, 1e-12
-    T4, tol4 = 50000, 1e-14
-    T5, tol5 = 300000, 1e-16
+    T4, tol4 = 5000, 1e-14
+    T5, tol5 = 10000, 1e-16
     T6, tol6 = 10000, 1e-16
     stages = ((T1, tol1), (T2, tol2), (T3, tol3), (T4, tol4), (T5, tol5))
 
